@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hooptap Tools</title>
+    </head>
+    <body>
+        <style>
+        	* { box-sizing: border-box; margin: 0; padding: 0; }
+        	html, body { height: 100%; }
+            body,
+            .panel,
+            #console {
+            	padding: 5px;
+            }
+            .panel-header {
+            	background: #ccc;
+            	padding: 5px;
+            	font-weight: bold;
+            }
+            .panel-footer {
+            	text-align: right;
+            }
+            #console {
+            	height: 100px;
+            	overflow: auto;
+            	background: #000;
+            	color: #0f0;
+            	font-family: courier;
+            }
+        </style>
+
+		<div class="panel" id="dt-panel">
+
+			<div class="dt-panel-header">
+	        </div>
+
+			<div id="dt-panel-body">
+				<div class="panel" id="xpaths-panel">
+		            <div class="panel-header">
+		                <div class="panel-title">
+		                    Do click on an object in your page.
+		                </div>
+		            </div>
+		            <div class="panel-body">
+		                <div class="stored-xpath-block">
+		                    Stored XPaths:
+		                    <ul id="stored-xpath-list">
+		                    </ul>
+		                </div>
+		            </div>
+		            <div class="panel-footer">
+		                <div class="panel-actions">
+		                    <button id="xpaths-flush">Flush</button>
+		                    <button id="xpaths-save">Save</button>
+		                </div>
+		            </div>
+		        </div>
+			</div>
+
+			<div id="dt-panel-footer">
+        		<div class="panel" id="console"></div>
+			</div>
+
+		</div>
+
+        
+
+        <script src="panel.js"></script>
+    </body>
+</html>

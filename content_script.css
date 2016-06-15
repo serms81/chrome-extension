@@ -1,0 +1,18 @@
+.fixed-to-bottom {
+	position: fixed;
+	bottom: 0;
+	left: auto;
+	right: 0;
+	background: red;
+	color: white;
+	padding: 10px;
+}
+.div2.fixed-to-bottom {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: auto;
+	background: blue;
+	color: white;
+	padding: 10px;
+}

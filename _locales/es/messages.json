@@ -1,0 +1,27 @@
+{
+	"options_Saving": {
+		"message": "Guardando...",
+		"description": "Saving status"
+	},
+	"options_Save": {
+		"message": "Guardar",
+		"description": "Save button text"
+	},
+	"options_OptionsSaved": {
+		"message": "¡$num$ opciones guardadas!",
+		"placeholders": {
+          "num": {
+            "content": "$1",
+            "example": "1"
+          }
+        }
+	},
+	"options_FavColorTitle": {
+		"message": "Color favorito",
+		"description": "Favorite color panel header title"
+	},
+	"options_LikeColorTitle": {
+		"message": "¿Te gustan los colores?",
+		"description": "Like colors panel header title"
+	}
+}

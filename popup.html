@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hooptap Tools</title>
+        <script src="popup.js"></script>
+    </head>
+    <body>
+        <style>
+            body {
+                overflow: hidden;
+                margin: 0px;
+                background: white;
+                padding: 0px;
+                font-size: 12px;
+            }
+
+            div {
+                margin-top: 1px;
+                background: #fff;
+                padding: 6px 12px;
+                font-family: sans-serif;
+                text-align: center;
+                cursor: pointer;
+            }
+            div:first-child {
+                margin-top: 0px;
+            }
+            div:hover {
+                background: #ccc;
+            }
+            #red {
+                border: 1px solid red;
+                color: red;
+            }
+            #blue {
+                border: 1px solid blue;
+                color: blue;
+            }
+            #green {
+                border: 1px solid green;
+                color: green;
+            }
+            #yellow {
+                border: 1px solid yellow;
+                color: yellow;
+            }
+        </style>
+
+        <div class="color-selector" id="red">red</div>
+        <div class="color-selector" id="blue">blue</div>
+        <div class="color-selector" id="green">green</div>
+        <div class="color-selector" id="yellow">yellow</div>
+        <button id="go-to-options">Go to options</button>
+    </body>
+</html>
