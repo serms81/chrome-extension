@@ -108,14 +108,6 @@ var NODE = function (_node){
 
 
 
-
-
-
-
-
-
-
-
 document.addEventListener('click', function(_ev){
 	
 	if(!_ev.target.classList.contains('dont-prevent')){
@@ -124,12 +116,12 @@ document.addEventListener('click', function(_ev){
 
 	    var target             = _ev.target;
 	    var target_details     = NODE(target);
+        console.log('target_details',target_details);
 
-		chrome.extension.sendMessage(
+		sendToPanel(
 			{
-				'message'	: target_details.xpath,
-				'type'		: 'NODE',
-				'context'	: 'event.click'
+                'request'	: 'PanelItemsList_WRITE',
+                'data'	    : target_details.xpath
 			}
 		);
 	}
@@ -137,153 +129,72 @@ document.addEventListener('click', function(_ev){
 });
 
 
-var UI = (function(){
 
+/****************************************************************************************************/
+/****************************************************************************************************/
+/****************************************************************************************************/
+/****************************************************************************************************/
+
+
+
+function sendToPanel( params_obj )
+{
+    console.log( 'content sendToPanel fired! ', params_obj );
+	chrome.extension.sendMessage( params_obj );
+}
+
+const panelRequirements = { // panelResponser available orders
+    "localStorage": {
+        "SEND"      : "PanelLocalStorage_SEND",
+        "OVERWRITE" : "PanelLocalStorage_OVERWRITE"
+    },
+    "itemsList": {
+        "WRITE": "PanelItemsList_WRITE"
+    },
+    "console": {
+        "LOG": "PanelConsole_LOG"
+    }
+};
+
+var contentResponser = ( function()
+{
 	return {
 
-		save_at_localStorage: function(what){
-
-			localStorage.setItem('htHelper_pending',what);
-
-		},
-
-		sendLocalStorage: function(){
-
-			chrome.extension.sendMessage(
-		    	{
-		    		'request': 'Save this at localStorage',
-		    		'callback': localStorage.getItem('htHelper_pending')
-		    	}
-		    );
-
-		},
-
-		sendBodyClassName: function () {
-
-			console.log("function sendBodyClassName", NODE(document.body));
-		    chrome.extension.sendMessage(
-		    	{
-		    		'message': 'document.body.className' + document.body.className,
-		    		'context': 'question.answer'
-		    	}
-		    );
-			alert("document.body.className" + document.body.className);
-		},
-
-		createDIVs: function() {
-			var div = document.createElement('DIV');
-			div.className += " fixed-to-bottom dont-prevent";
-			div.textContent = "DIV.fixed-to-bottom";
-			document.body.appendChild(div);
-
-			//div.addEventListener('click', function(e){
-			//	alert( chrome.i18n.getMessage("@@extension_id") + ' && ' + chrome.i18n.getMessage("@@ui_locale") );
-			//});
-
-
-			var div2 = div.cloneNode(true);
-			div2.className += " div2";
-			div2.textContent += ".div2";
-			document.body.appendChild(div2);
-
-			div2.addEventListener('click', function(e){
-				alert( chrome.i18n.getMessage("options_Save") );
-			});
-		}
-	}
-
-})();
-
-
-//Handler request from background page
-chrome.extension.onMessage.addListener(function (message, sender) {
-    //Send needed information to background page
-
-    var Answer = false;
-
-	if ( 'string' == typeof message ){
-		switch (message) {
-			case 'Can you send me your localStorage, please?':
-				alert(message);
-				UI.sendLocalStorage();
-				alert('Check if sent to DevTools');
-				break;
-			default:
-				alert(message);
-				break;
-		}
-	}
-
-	if ( 'object' == typeof message && message.question){
-
-		switch (message.question) {
-			case 'Are you ok?':
-				Answer = 'Yes, I am.';
-				break;
-			default:
-				Answer = false;
-				break;
-		}
-
-		if (false !== Answer)
-			message.question += ' --- ' + Answer;
-
-		alert(message.question);
-	}
-
-	if ( 'object' == typeof message && message.callback)// && 'function' == typeof message.callback)
-	{
-		console.log( typeof message.callback, message.callback );
-		if (message.question == 'Save this at localStorage')
-			localStorage.setItem('htHelper_pending',message.callback);
-		else if ( 'string' == typeof message.callback ){
-			console.log('eval function');
-			eval(message.callback);
-		}
-	};
-
-});
-
-
-/****************************************************************************************************/
-/****************************************************************************************************/
-/****************************************************************************************************/
-/****************************************************************************************************/
-
-
-var contentResponser = (function(){
-
-	function sendToPanel( params_obj )
-	{
-		chrome.extension.sendMessage( params_obj );
-	};
-
-	return {
-
-		'Overwrite_ContentLocalStorage': function( params )
+		'questionAnswers':
 		{
-			localStorage.setItem( 'htHelper_pending', params );
+			"Are you ok?":
+				"Yes, I am.",
+			"What is the time there?":
+				"Here it's " + (new Date()).toTimeString()
 		},
 
-		'Send_ContentLocalStorage': function( params )
+		'ContentLocalStorage_OVERWRITE': function( data )
+		{
+			localStorage.setItem( 'htHelper_pending', data );
+            console.log( 'localStorage', localStorage );
+		},
+
+		'ContentLocalStorage_SEND': function()
 		{
 			sendToPanel(
 		    	{
-		    		'request': 'Save this at panel localStorage',
-		    		'callback': localStorage.getItem('htHelper_pending')
+		    		'request'   : panelRequirements.localStorage.OVERWRITE,
+		    		'data'      : localStorage.getItem('htHelper_pending')
 		    	}
 		    );
-		}
+		},
 
-	};
+        "ContentConsole_LOG": function( what )
+        {
+            console.log( what );
+        }
 
+	}
 })();
 
-
-
-
-//Handler request from background page
-if(false) chrome.extension.onMessage.addListener( function ( message, sender ) {
+function listenFromPanel( message, sender )
+{
+    console.log( 'message recieved from panel', message );
 
 	if ( 'string' == typeof message )
 	{
@@ -295,7 +206,7 @@ if(false) chrome.extension.onMessage.addListener( function ( message, sender ) {
 		{
 			switch ( message ) {
 				default:
-					alert(message);
+					alert( 'Message from devtools: ' + message );
 					break;
 			}
 		}
@@ -304,34 +215,25 @@ if(false) chrome.extension.onMessage.addListener( function ( message, sender ) {
 	{
 		if ( message.question )
 		{
-    		var Answer = false;
-		
-			switch ( message.question )
-			{
-				case 'Are you ok?':
-					Answer = 'Yes, I am.';
-					break;
-				default:
-					Answer = false;
-					break;
-			}
-	
-			if (Answer)
-				console.log(message.question + ' --- ' + Answer);
-		};
+			var Answer = contentResponser.questionAnswers[ message.question ];
 
-		if ( message.request && 'function' == typeof contentResponser[ message.request ] )
-		{
-			//Send needed information to background page
-			if ( message.data )
-				contentResponser[ message.request ]( message.data );
-			else
-				contentResponser[ message.request ]();
+			if (Answer)
+				alert(message.question + ' --- ' + Answer);
 		}
-		else
+
+		if ( message.request)
 		{
-			console.log( 'devtools request not defined "' + message.request + '"' );
-		};
+			if ( 'function' == typeof contentResponser[ message.request ] ) {
+				//Send needed information to background page
+				if ( message.data )
+					contentResponser[ message.request ]( message.data );
+				else
+					contentResponser[ message.request ]();
+			}
+			else {
+				console.log('devtools request not defined: "' + message.request + '"');
+			}
+		}
 
 		if ( message.callback )
 		{
@@ -347,8 +249,11 @@ if(false) chrome.extension.onMessage.addListener( function ( message, sender ) {
 					message.callback();
 					break;
 			}
-		};
+		}
 
-	};
+	}
 
-});
+}
+
+//Handler request from background page
+chrome.extension.onMessage.addListener(	listenFromPanel );

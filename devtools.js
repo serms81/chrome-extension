@@ -1,7 +1,7 @@
 
 // global chrome
 chrome.devtools.panels.create(
-  'Hooptap Helper',
+  'SDK Helper',
   'icon-19.png',
   'panel.html',
   function(panel){

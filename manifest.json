@@ -1,8 +1,8 @@
 {
   // Required
   "manifest_version": 2,
-  "name": "Hooptap SDK Chrome Extension",
-  "author": "Hooptap",
+  "name": "SDK Chrome Extension",
+  "author": "SDK Chrome Extension Author",
   "version": "0.1",
 
   //"default_locale": "en",
@@ -48,7 +48,7 @@
       //"38": "icon-38.png",            // optional
       "19": "icon-19.png"           // optional
     },
-    "default_title": "Hooptap SDK"      // optional; shown in tooltip
+    "default_title": "SDK Chrome Extension"      // optional; shown in tooltip
     //"default_popup": "popup.html"        // optional
   },
 

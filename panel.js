@@ -1,7 +1,6 @@
 
-var the_panel;
-var the_panel_window = window;
 var port;
+
 var pending_msg = {
 
   'store': function(data) {
@@ -22,125 +21,236 @@ var pending_msg = {
   },
   _data: []
 
-}
+};
 
+var panelConsole = document.getElementById("console");
+var panelList = document.getElementById("stored-xpath-list");
 
-function display_at_panel(msg){
+var CONSOLE = {
 
+    log: function(what)
+    {
+        what = ( 'object' == typeof what )? JSON.stringify( what ) : what;
+        panelConsole.innerHTML += '<p>'+what+'</p>';
+    },
+
+    clear: function()
+    {
+        while (panelConsole.firstChild) {
+            panelConsole.removeChild( panelConsole.firstChild );
+        }
+        panelConsole.innerHTML = '';
+    }
+
+};
+
+var LIST = {
+
+    refresh_from_localstorage: function()
+    {
+        display_flush();
+        pending_msg.refresh(message.data);
+    },
+
+    write: function(what)
+    {
+        // TODO remove
+        what = ( 'object' == typeof what )? JSON.stringify( what ) : what;
+
+        if ( 'string' == typeof what )
+        {
+            panelList.innerHTML += '<li>'+what+'</li>';
+        }
+        else if ( 'object' == typeof what )
+        {
+            // TODO develop
+            JSON.stringify( what );
+        }
+    },
+
+    flush: function()
+    {
+        while (panelList.firstChild) {
+            panelList.removeChild( panelList.firstChild );
+        }
+        panelList.innerHTML = '';
+    }
+
+};
+
+/*function display_at_panel(msg)
+{
   var isString = ('string' == typeof msg);
   var isObject = ('object' == typeof msg);
   var hasCntxt = (isObject && msg.context);
 
   if(msg.message)
-  {  
+  {
       if(isString)
       {
-          document.getElementById("console").innerHTML += '<p>'+msg+'</p>';
+          //document.getElementById("console").innerHTML += '<p>'+msg+'</p>';
       }
       else if(isObject && !hasCntxt)
       {
-          document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
+          //document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
       }
       else if(isObject && hasCntxt)
       {
         if ( 'event.click' == msg.context )
-          document.getElementById("stored-xpath-list").innerHTML += '<li>'+msg.message+'</li>';
+          //document.getElementById("stored-xpath-list").innerHTML += '<li>'+msg.message+'</li>';
         else
-          document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
+          //document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
       }
   }
   else if (msg.request)
   {
-		document.getElementById("console").innerHTML += '<p>Request:'+msg.request+'</p>';
+		CONSOLE.log( 'Request:'+msg.request );
   }
+}*/
 
-}
-
-function display_flush() {
-
+function display_flush()
+{
     pending_msg.flush();
-    document.getElementById("console").innerHTML = '';
-    document.getElementById("stored-xpath-list").innerHTML = '';
+    CONSOLE.clear();
+    LIST.flush();
+}
+
+function flush_button_add_listener()
+{
+  document.getElementById( 'xpaths-flush' ).addEventListener(
+      'click',
+      function(e)
+      {
+        display_flush();
+      }
+  );
 
 }
 
-function saveLast(){
 
- 	port.postMessage( {
- 		'question'	 : 'Are you ok?',
- 		//'callback'	: function(arg){alert(arg);},
- 		'callback'   : '(function(){localStorage.setItem("htHelper_pending",'+JSON.stringify(pending_msg._data)+');})()'
- 	} );
-
+function sendToContent( params_obj )
+{
+    port.postMessage( params_obj )
 }
 
-function flush_button_add_listener(){
 
-  document.getElementById('xpaths-flush').addEventListener('click',function(e){
-  	display_flush();
-  });
+const contentRequirements = { // contentResponser available orders
+    "localStorage": {
+        "SEND"      : "ContentLocalStorage_SEND",
+        "OVERWRITE" : "ContentLocalStorage_OVERWRITE"
+    },
+    "console": {
+        "LOG"       : "ContentConsole_LOG"
+    }
+};
 
+
+var panelResponser = ( function()
+{
+    return {
+
+        "PanelItemsList_WRITE": function( what )
+        {
+            LIST.write( what )
+        },
+
+        "PanelLocalStorage_SEND": function ()
+        {
+            sendToContent(
+                {
+                    'request': contentRequirements.localStorage.OVERWRITE,
+                    'data': JSON.stringify(pending_msg._data)
+                }
+            );
+        },
+
+        "PanelLocalStorage_OVERWRITE": function ( data )
+        {
+            localStorage.setItem( 'htHelper_pending', data );
+            LIST.refresh_from_localstorage();
+        },
+
+        "PanelConsole_LOG"       : function( what )
+        {
+            CONSOLE.log( what );
+        }
+
+    }
+})();
+
+function listenFromContent( message, sender )
+{
+    CONSOLE.log('message recieved from content', message);
+
+    if ( 'object' == typeof message )
+    {
+        if ( message.request )
+        {
+            if ( message.request ==  'Save this at localStorage' )
+            {
+                //	localStorage.setItem('htHelper_pending',message.callback);
+            }
+        }
+
+        if ( message.request )
+        {
+            if ( 'function' == typeof panelResponser[ message.request ] ) {
+                //Send needed information to background page
+                if ( message.data )
+                    panelResponser[ message.request ]( message.data );
+                else
+                    panelResponser[ message.request ]();
+            }
+            else {
+                CONSOLE.log('content request not defined: "' + message.request + '"');
+            }
+        }
+
+        if ( message.callback )
+        {
+            switch( typeof message.callback )
+            {
+                case 'string':
+                    console.log('eval callback function');
+                    eval(message.callback);
+                    break;
+
+                case 'function':
+                    console.log('call callback function');
+                    message.callback();
+                    break;
+            }
+        }
+    }
 }
 
 window.onload = function(){
 
 	//Created a port with background page for continous message communication
-	port = chrome.extension.connect({
-	  name: "Devtools Port"
-	});
+	port = chrome.extension.connect( { 'name': "Devtools Port" } );
 
 	//Hanlde response when recieved from background page
-	port.onMessage.addListener(
-
-	  function (msg) {
-
-	  	var message = msg;
-
-	  	if (message.request == 'Save this at localStorage')
-	  	{
-	  		display_flush();
-	  		pending_msg.refresh(message.callback);
-			//	localStorage.setItem('htHelper_pending',message.callback);
-	  	};
-
-		if ( 'object' == typeof message && message.callback)// && 'function' == typeof message.callback)
-		{
-			console.log( typeof message.callback, message.callback );
-
-
-			if ( 'string' == typeof message.callback ){
-				console.log('eval function');
-				eval(message.callback);
-			}
-		};
-
-    	pending_msg._data.push(msg);
-    	display_at_panel(msg);
-
-		if(pending_msg._data.length > 1)
-		{
-
-		    port.postMessage( {
-		 		'question'	 : 'Save this at localStorage',
-		 		'callback'   : JSON.stringify(pending_msg._data)
-		 	} );
-		
-		};
-	  }
-
-	);
+	port.onMessage.addListener( listenFromContent );
 
 	//Posting message to background page
-	port.postMessage("Check listening tab URL");
 
+    // as single message
+    sendToContent(
+        "Check listening tab URL"
+    );
+
+    // as question (will return an answer)
+    sendToContent(
+        {
+            'question' : 'Are you ok?'
+        }
+    );
+
+    // as requirement
 	if( !pending_msg._data.length )
-		port.postMessage("Can you send me your localStorage, please?");
-
- 	port.postMessage( {
- 		'question'	 : 'Are you ok?',
- 		'callback'   : 'UI.createDIVs()'
- 	} );
-
+        sendToContent(
+            { request: contentRequirements.localStorage.SEND }
+        );
 
 	pending_msg.refresh();
     flush_button_add_listener();
