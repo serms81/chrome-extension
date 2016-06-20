@@ -106,6 +106,17 @@ var NODE = function (_node){
 };
 
 
+function localStoragePush( newObj )
+{
+	if ( !newObj ) return;
+
+	var curr_val = localStorage.getItem('htHelper_pending') || "[]";
+	curr_val = JSON.parse( curr_val );
+	curr_val.push( newObj );
+	curr_val = JSON.stringify( curr_val );
+	localStorage.setItem( 'htHelper_pending', curr_val );
+}
+
 
 
 document.addEventListener('click', function(_ev){
@@ -115,15 +126,25 @@ document.addEventListener('click', function(_ev){
 	    _ev.stopPropagation();
 
 	    var target             = _ev.target;
-	    var target_details     = NODE(target);
-        console.log('target_details',target_details);
+	    var target_details     = NODE( target );
+        console.log( 'target_details', target_details );
+
+		localStoragePush( target_details.xpath );
+
+		/*sendToPanel(
+			{
+				'request'	: panelRequirements.itemsList.WRITE,
+				'data'	    : target_details.xpath
+			}
+		);*/
 
 		sendToPanel(
 			{
-                'request'	: 'PanelItemsList_WRITE',
-                'data'	    : target_details.xpath
+				'request'   : panelRequirements.localStorage.OVERWRITE,
+				'data'      : localStorage.getItem('htHelper_pending')
 			}
 		);
+
 	}
 
 });
@@ -136,7 +157,6 @@ document.addEventListener('click', function(_ev){
 /****************************************************************************************************/
 
 
-
 function sendToPanel( params_obj )
 {
     console.log( 'content sendToPanel fired! ', params_obj );
@@ -144,16 +164,20 @@ function sendToPanel( params_obj )
 }
 
 const panelRequirements = { // panelResponser available orders
+
     "localStorage": {
         "SEND"      : "PanelLocalStorage_SEND",
         "OVERWRITE" : "PanelLocalStorage_OVERWRITE"
     },
+
     "itemsList": {
         "WRITE": "PanelItemsList_WRITE"
     },
+
     "console": {
         "LOG": "PanelConsole_LOG"
     }
+
 };
 
 var contentResponser = ( function()
@@ -194,7 +218,7 @@ var contentResponser = ( function()
 
 function listenFromPanel( message, sender )
 {
-    console.log( 'message recieved from panel', message );
+    console.log( 'message recieved from panel: ' + ( ('string' == typeof message)? message : JSON.stringify(message) ) );
 
 	if ( 'string' == typeof message )
 	{
@@ -257,3 +281,4 @@ function listenFromPanel( message, sender )
 
 //Handler request from background page
 chrome.extension.onMessage.addListener(	listenFromPanel );
+

@@ -1,37 +1,52 @@
 
+var panelConsole    = document.getElementById( 'console' );
+var panelList       = document.getElementById( 'stored-xpath-list' );
+var button_flush    = document.getElementById( 'xpaths-flush' );
+var button_save     = document.getElementById( 'xpaths-save' );
+
 var port;
 
 var pending_msg = {
 
-  'store': function(data) {
+  'store': function(data)
+  {
   	data = data || JSON.stringify(pending_msg._data);
     localStorage.setItem('htHelper_pending',data);
   },
-  'restore': function(){
+
+  'restore': function()
+  {
     pending_msg._data = JSON.parse(localStorage.getItem('htHelper_pending')) || [];
   },
-  'flush': function(){
+
+  'flush': function()
+  {
     pending_msg._data = [];
     pending_msg.store();
   },
-  'refresh': function(what){
-	if (what) localStorage.setItem('htHelper_pending',what);
+
+  'refresh': function()
+  {
 	pending_msg.restore();
-	pending_msg._data.forEach(function(msg,i){ display_at_panel(msg); });
+	pending_msg._data.forEach(
+        function(msg,i)
+        {
+            LIST.write( msg );
+        }
+    );
   },
+
   _data: []
 
 };
 
-var panelConsole = document.getElementById("console");
-var panelList = document.getElementById("stored-xpath-list");
 
 var CONSOLE = {
 
     log: function(what)
     {
         what = ( 'object' == typeof what )? JSON.stringify( what ) : what;
-        panelConsole.innerHTML += '<p>'+what+'</p>';
+        panelConsole.innerHTML += '<p class="console-line">&gt; '+what+'</p>';
     },
 
     clear: function()
@@ -44,13 +59,8 @@ var CONSOLE = {
 
 };
 
-var LIST = {
 
-    refresh_from_localstorage: function()
-    {
-        display_flush();
-        pending_msg.refresh(message.data);
-    },
+var LIST = {
 
     write: function(what)
     {
@@ -78,53 +88,42 @@ var LIST = {
 
 };
 
-/*function display_at_panel(msg)
-{
-  var isString = ('string' == typeof msg);
-  var isObject = ('object' == typeof msg);
-  var hasCntxt = (isObject && msg.context);
-
-  if(msg.message)
-  {
-      if(isString)
-      {
-          //document.getElementById("console").innerHTML += '<p>'+msg+'</p>';
-      }
-      else if(isObject && !hasCntxt)
-      {
-          //document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
-      }
-      else if(isObject && hasCntxt)
-      {
-        if ( 'event.click' == msg.context )
-          //document.getElementById("stored-xpath-list").innerHTML += '<li>'+msg.message+'</li>';
-        else
-          //document.getElementById("console").innerHTML += '<p>'+msg.message+'</p>';
-      }
-  }
-  else if (msg.request)
-  {
-		CONSOLE.log( 'Request:'+msg.request );
-  }
-}*/
 
 function display_flush()
 {
-    pending_msg.flush();
-    CONSOLE.clear();
     LIST.flush();
+    pending_msg.flush();
+    sendToContent(
+        {
+            'request'   : contentRequirements.localStorage.OVERWRITE,
+            'data'      : localStorage.getItem( 'htHelper_pending' )
+        }
+    )
 }
 
-function flush_button_add_listener()
-{
-  document.getElementById( 'xpaths-flush' ).addEventListener(
-      'click',
-      function(e)
-      {
-        display_flush();
-      }
-  );
 
+function display_refresh()
+{
+    LIST.flush();
+    pending_msg.refresh();
+}
+
+
+function document_add_listeners()
+{
+    button_flush.addEventListener(
+        'click',
+        function(e)
+        {
+            display_flush();
+        }
+    );
+    button_save.addEventListener(
+        'click',
+        function(e)
+        {
+        }
+    );
 }
 
 
@@ -135,23 +134,27 @@ function sendToContent( params_obj )
 
 
 const contentRequirements = { // contentResponser available orders
+    
     "localStorage": {
         "SEND"      : "ContentLocalStorage_SEND",
         "OVERWRITE" : "ContentLocalStorage_OVERWRITE"
     },
+    
     "console": {
         "LOG"       : "ContentConsole_LOG"
     }
+    
 };
 
 
 var panelResponser = ( function()
 {
+
     return {
 
         "PanelItemsList_WRITE": function( what )
         {
-            LIST.write( what )
+            LIST.write( what );
         },
 
         "PanelLocalStorage_SEND": function ()
@@ -167,10 +170,11 @@ var panelResponser = ( function()
         "PanelLocalStorage_OVERWRITE": function ( data )
         {
             localStorage.setItem( 'htHelper_pending', data );
-            LIST.refresh_from_localstorage();
+            CONSOLE.log( 'PanelLocalStorage_OVERWRITE with: ' + data );
+            display_refresh();
         },
 
-        "PanelConsole_LOG"       : function( what )
+        "PanelConsole_LOG": function( what )
         {
             CONSOLE.log( what );
         }
@@ -178,19 +182,13 @@ var panelResponser = ( function()
     }
 })();
 
+
 function listenFromContent( message, sender )
 {
-    CONSOLE.log('message recieved from content', message);
+    CONSOLE.log( 'message recieved from panel: ' + ( ('string' == typeof message)? message : JSON.stringify(message) ) );
 
     if ( 'object' == typeof message )
     {
-        if ( message.request )
-        {
-            if ( message.request ==  'Save this at localStorage' )
-            {
-                //	localStorage.setItem('htHelper_pending',message.callback);
-            }
-        }
 
         if ( message.request )
         {
@@ -224,8 +222,9 @@ function listenFromContent( message, sender )
     }
 }
 
-window.onload = function(){
 
+window.onload = function()
+{
 	//Created a port with background page for continous message communication
 	port = chrome.extension.connect( { 'name': "Devtools Port" } );
 
@@ -246,6 +245,13 @@ window.onload = function(){
         }
     );
 
+    // with callback
+    sendToContent(
+        {
+            'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback callback" })'
+        }
+    );
+
     // as requirement
 	if( !pending_msg._data.length )
         sendToContent(
@@ -253,5 +259,6 @@ window.onload = function(){
         );
 
 	pending_msg.refresh();
-    flush_button_add_listener();
+    document_add_listeners();
 };
+
