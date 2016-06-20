@@ -3,6 +3,7 @@ var panelConsole    = document.getElementById( 'console' );
 var panelList       = document.getElementById( 'stored-xpath-list' );
 var button_flush    = document.getElementById( 'xpaths-flush' );
 var button_save     = document.getElementById( 'xpaths-save' );
+var button_enable_catcher  = document.getElementById( 'catcher-toggle' );
 
 var port;
 
@@ -47,6 +48,8 @@ var CONSOLE = {
     {
         what = ( 'object' == typeof what )? JSON.stringify( what ) : what;
         panelConsole.innerHTML += '<p class="console-line">&gt; '+what+'</p>';
+
+        panelConsole.scrollTop = panelConsole.scrollHeight;
     },
 
     clear: function()
@@ -76,6 +79,8 @@ var LIST = {
             // TODO develop
             JSON.stringify( what );
         }
+
+        panelList.scrollTop = panelList.scrollHeight;
     },
 
     flush: function()
@@ -108,8 +113,21 @@ function display_refresh()
     pending_msg.refresh();
 }
 
+function catcher_enable()
+{
+    button_enable_catcher.classList.remove( 'catcher-disabled' );
+    button_enable_catcher.textContent = 'Press to disable';
+    sendToContent( { 'callback': 'alert("catcher-enabled"); content_document_add_listener();' } );
+}
 
-function document_add_listeners()
+function catcher_disable()
+{
+    button_enable_catcher.classList.add( 'catcher-disabled' );
+    button_enable_catcher.textContent = 'Press to enable';
+    sendToContent( { 'callback': 'alert("catcher-disabled"); content_document_remove_listener();' } );
+}
+
+function panel_document_add_listeners()
 {
     button_flush.addEventListener(
         'click',
@@ -122,8 +140,46 @@ function document_add_listeners()
         'click',
         function(e)
         {
+            sendToContent(
+                {
+                    'request' : contentRequirements.localStorage.OVERWRITE,
+                    'data'    : localStorage.getItem('htHelper_pending')
+                }
+            )
         }
     );
+    button_enable_catcher.addEventListener(
+        'click',
+        function(e)
+        {
+            if ( button_enable_catcher.classList.contains( 'catcher-disabled' ) )
+            {
+                catcher_enable();
+            }
+            else
+            {
+                catcher_disable();
+            }
+        }
+    );
+}
+
+
+/****************************************************************************************************/
+/****************************************************************************************************/
+/****************************************************************************************************/
+/****************************************************************************************************/
+
+
+function inspected_window_context_eval( what )
+{
+    chrome.devtools.inspectedWindow.eval( what );
+}
+
+
+function content_script_context_eval( what )
+{
+    chrome.devtools.inspectedWindow.eval( what, { useContentScriptContext: true } );
 }
 
 
@@ -149,7 +205,6 @@ const contentRequirements = { // contentResponser available orders
 
 var panelResponser = ( function()
 {
-
     return {
 
         "PanelItemsList_WRITE": function( what )
@@ -185,7 +240,7 @@ var panelResponser = ( function()
 
 function listenFromContent( message, sender )
 {
-    CONSOLE.log( 'message recieved from panel: ' + ( ('string' == typeof message)? message : JSON.stringify(message) ) );
+    CONSOLE.log( 'message recieved from content: ' + ( ('string' == typeof message)? message : JSON.stringify(message) ) );
 
     if ( 'object' == typeof message )
     {
@@ -206,15 +261,24 @@ function listenFromContent( message, sender )
 
         if ( message.callback )
         {
+            CONSOLE.log( typeof message.callback + ' message.callback recieved' );
+
             switch( typeof message.callback )
             {
                 case 'string':
-                    console.log('eval callback function');
-                    eval(message.callback);
+                    CONSOLE.log('eval callback string');
+                    try {
+                        if ( message.callback.indexOf('sendToPanel') == 0 )
+                            content_script_context_eval( message.callback );
+                        else
+                            inspected_window_context_eval(message.callback);
+                    } catch(e) {
+                        CONSOLE.log( 'eval callback string catch: ' + e.message )
+                    }
                     break;
 
                 case 'function':
-                    console.log('call callback function');
+                    CONSOLE.log('call callback function');
                     message.callback();
                     break;
             }
@@ -245,10 +309,11 @@ window.onload = function()
         }
     );
 
-    // with callback
+    // callback set
     sendToContent(
         {
-            'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback callback" })'
+            'question' : 'What is the time there?',
+            'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback of callback" })'
         }
     );
 
@@ -259,6 +324,5 @@ window.onload = function()
         );
 
 	pending_msg.refresh();
-    document_add_listeners();
+    panel_document_add_listeners();
 };
-

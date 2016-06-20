@@ -18,18 +18,46 @@
             	font-weight: bold;
             }
             .panel-footer {
+				padding-top: 5px;
             	text-align: right;
             }
+			#console,
+			#stored-xpath-list {
+				height: 40vh;
+				overflow: auto;
+			}
             #console {
-            	height: 100px;
-            	overflow: auto;
             	background: #000;
             	color: #0f0;
             	font-family: courier;
+				font-size: .8em;
+				word-break: break-all;
             }
 			.console-line + .console-line{
-				padding-top: 5px;
+				padding-top: .5em;
 			}
+            .action-button {
+                display: inline-block;
+                border-radius: 3px;
+                background: #666;
+                padding: 6px 12px;
+                color: #fff;
+                cursor: pointer;
+                -webkit-box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+                -moz-box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+                box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+            }
+            #catcher-toggle {
+                background: #966;
+            }
+            .catcher-disabled {
+                background: #696 !important;
+            }
+            .action-button:active {
+                -webkit-box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+                -moz-box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+                box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+            }
         </style>
 
 		<div class="panel" id="dt-panel">
@@ -38,6 +66,11 @@
 	        </div>
 
 			<div id="dt-panel-body">
+				<div class="panel-actions">
+					<div id="xpaths-flush" class="action-button">Flush</div>
+					<div id="xpaths-save" class="action-button">Save</div>
+                    <div id="catcher-toggle" class="action-button catcher-disabled">Press to enable</div>
+				</div>
 				<div class="panel" id="xpaths-panel">
 		            <div class="panel-header">
 		                <div class="panel-title">
@@ -52,10 +85,6 @@
 		                </div>
 		            </div>
 		            <div class="panel-footer">
-		                <div class="panel-actions">
-		                    <button id="xpaths-flush">Flush</button>
-		                    <button id="xpaths-save">Save</button>
-		                </div>
 		            </div>
 		        </div>
 			</div>
