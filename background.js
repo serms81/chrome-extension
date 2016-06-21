@@ -26,9 +26,8 @@
  function (tab)
  {
  executeScripts(null, [
- { code: "alert('executeScript0.js');" },
- { file: "executeScript.js" },
- { file: "executeScript2.js" }
+ { code: "alert('executeScript.js will be loaded');" },
+ { file: "executeScript.js" }
  ]);
  }
  );
@@ -81,7 +80,6 @@ chrome.extension.onConnect.addListener(
 /****************************************************************************************************/
 /****************************************************************************************************/
 
-/*
 // as single message
 sendToContent(
     "Check listening tab URL"
@@ -101,7 +99,6 @@ sendToContent(
         'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback of callback" })'
     }
 );
-*/
 /*
 // Creates extension contextMenu items
 ( function createContextMenus()

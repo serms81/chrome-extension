@@ -2,8 +2,8 @@
 // global chrome
 chrome.devtools.panels.create(
   'SDK Helper',
-  'icon-19.png',
-  'panel.html',
+  'icons/icon-19.png',
+  'panel/panel.html',
   function(panel){
 
     panel.onShown.addListener(

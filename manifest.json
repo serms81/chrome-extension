@@ -8,8 +8,8 @@
   //"default_locale": "en",
   "description": "A plain text description",
   "icons" : {
-    "48" : "icon-48.png",
-    "128" : "icon-128.png"
+    "48" : "icons/icon-48.png",
+    "128" : "icons/icon-128.png"
   },
   "default_locale": "en",
 
@@ -19,9 +19,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.clubpremier.com/*"],
-      "css": ["content_script.css"],
-      "js" : ["content_script2.js"],
+      "matches": ["<all_urls>"],
+      "css": ["content/content_script.css"],
+      "js" : ["content/content_script.js"],
       "run_at": "document_end"
     }
   ],
@@ -31,7 +31,7 @@
   "devtools_page": "devtools.html",
   "options_ui": {
     // Required.
-    "page": "options.html",
+    "page": "options/options.html",
     // Recommended.
     "chrome_style": true
     // Not recommended; only provided for backwards compatibility,
@@ -45,11 +45,11 @@
     // represent actions that can be taken on the current page,
     // but that aren't applicable to all pages.
     "default_icon": {                    // optional
-      //"38": "icon-38.png",            // optional
-      "19": "icon-19.png"           // optional
+      //"38": "icons/icon-38.png",            // optional
+      "19": "icons/icon-19.png"           // optional
     },
     "default_title": "SDK Chrome Extension"      // optional; shown in tooltip
-    //"default_popup": "popup.html"        // optional
+    //"default_popup": "popup/popup.html"        // optional
   },
 
   "permissions": [

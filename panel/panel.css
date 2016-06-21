@@ -1,0 +1,73 @@
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+#console,
+#dt-panel {
+    overflow: auto;
+    padding: 5px;
+    width: calc( 100vw - 100px );
+}
+
+#dt-panel-sidebar {
+    position: fixed;
+    top:0;
+    right:0;
+    width: 100px;
+    padding: 5px;
+}
+
+#console {
+    height: calc( 33vh - 5px );
+    background: #000;
+    color: #0f0;
+    font-family: courier;
+    font-size: .8em;
+    word-break: break-all;
+}
+.console-line + .console-line{
+    padding-top: .5em;
+}
+
+#dt-panel {
+    position: relative;
+    height: calc( 67vh - 5px );
+}
+
+.panel-header {
+    background: #ccc;
+    padding: 5px;
+    font-weight: bold;
+}
+
+#stored-xpath-list {
+    padding-left: 25px;
+}
+
+.panel-actions {
+    margin-bottom: 5px;
+}
+
+.action-button {
+    /*display: inline-block;*/
+    border-radius: 3px;
+    background: #666;
+    padding: 6px 12px;
+    text-align: center;
+    color: #fff;
+    cursor: pointer;
+    -webkit-box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+    -moz-box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+    box-shadow: inset 1px 1px 2px #ccc, inset -1px -1px 2px #666;
+}
+#catcher-toggle {
+    background: #966;
+}
+.catcher-disabled {
+    background: #696 !important;
+}
+.action-button:active {
+    -webkit-box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+    -moz-box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+    box-shadow: inset 1px 1px 2px #666, inset -1px -1px 2px #ccc;
+}

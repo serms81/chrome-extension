@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>DevTools Panel</title>
+		<link rel="stylesheet" href="panel.css">
+    </head>
+    <body>
+
+		<div id="console"></div>
+
+		<div class="panel" id="dt-panel">
+
+			<div class="panel-header" id="dt-panel-header"></div>
+
+			<div class="panel-body" id="dt-panel-body">
+
+				<div class="panel" id="xpaths-panel">
+		            <div class="panel-header">
+		                <div class="panel-title">
+		                    Do click on an object in your page.
+		                </div>
+		            </div>
+		            <div class="panel-body">
+		                <div class="stored-xpath-block">
+		                    Stored XPaths:
+		                    <ol id="stored-xpath-list">
+		                    </ol>
+		                </div>
+		            </div>
+		            <div class="panel-footer"></div>
+		        </div>
+			</div>
+
+			<div class="panel-footer" id="dt-panel-footer"></div>
+
+			<div class="panel-sidebar" id="dt-panel-sidebar">
+				<div class="panel-actions">
+					<div id="xpaths-flush" class="action-button">Flush</div>
+					<div id="xpaths-save" class="action-button">Save</div>
+					<div id="catcher-toggle" class="action-button catcher-disabled">Press to enable catcher</div>
+				</div>
+				<div id="demo-launchers"></div>
+			</div>
+
+		</div>
+
+        <script src="panel.js"></script>
+    </body>
+</html>
