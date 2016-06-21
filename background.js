@@ -1,88 +1,112 @@
 
+/*
+ // Will try to insert as script every object set in array
+ function executeScripts(tabId, injectDetailsArray)
+ {
+ function createCallback(tabId, injectDetails, innerCallback) {
+ return function () {
+ chrome.tabs.executeScript(tabId, injectDetails, innerCallback);
+ };
+ }
+
+ var callback = null;
+
+ for (var i = injectDetailsArray.length - 1; i >= 0; --i)
+ callback = createCallback(tabId, injectDetailsArray[i], callback);
+
+ if (callback !== null)
+ callback();   // execute outermost function
+ }
+
+
+
+ // Working when no popup is defined at manifest.json
+ //chrome.browserAction.onClicked.addListener(function (tab) {
+ chrome.pageAction.onClicked.addListener(
+ function (tab)
+ {
+ executeScripts(null, [
+ { code: "alert('executeScript0.js');" },
+ { file: "executeScript.js" },
+ { file: "executeScript2.js" }
+ ]);
+ }
+ );
+ */
+
 var port;
 
-//Handle request from devtools
-chrome.extension.onConnect.addListener( function ( _port )
-{
-    port = _port;
-
-    port.onMessage.addListener( function ( message )
-    {
-        //Request a tab for sending needed information
-        chrome.tabs.query(
-                {
-                "status"        : "complete",
-                "currentWindow" : true//,
-                //"url": "http://www.google.co.in/"
-            },
-            function ( tabs )
-            {
-                for ( var tab in tabs ) {
-                    //Sending Message to content scripts
-                    chrome.tabs.sendMessage( tabs[tab].id, message );
-                }
-            }
-        );
-    });
-    //Posting back to Devtools
-    chrome.extension.onMessage.addListener( function ( message, sender )
-    {
-        port.postMessage( message );
-    });
-
-});
-
-
-function sendToPanel( message )
+// When devtools panel initialized,
+// this can send messages to devtools panel.
+var sendToPanel = function ( message, sender )
 {
     port.postMessage( message );
-}
+};
 
-function sendToContent( message )
+var sendToContent = function ( message )
 {
-    console.log( 'sendToContent', message);
-    chrome.tabs.sendMessage( chrome.devtools.inspectedWindow.tabId, message );
-}
+    //Request a tab for sending needed information
+    chrome.tabs.query(
+        {
+            "status"        : "complete",
+            "currentWindow" : true//,
+            //"url": "http://www.google.co.in/"
+        },
+        function ( tabs )
+        {
+            for ( var tab in tabs ) {
+                //Sending Message to content scripts
+                chrome.tabs.sendMessage( tabs[tab].id, message );
+            }
+        }
+    );
+};
 
+
+//Handle request from devtools panel
+chrome.extension.onConnect.addListener(
+    function ( _port )
+    {
+        port = _port;
+
+        port.onMessage.addListener( sendToContent );
+
+        //Posting back to Devtools
+        chrome.extension.onMessage.addListener( sendToPanel );
+    }
+);
+
+
+
+/****************************************************************************************************/
+/****************************************************************************************************/
 
 /*
-// Will try to insert as script every object set in array
-function executeScripts(tabId, injectDetailsArray)
-{
-    function createCallback(tabId, injectDetails, innerCallback) {
-        return function () {
-            chrome.tabs.executeScript(tabId, injectDetails, innerCallback);
-        };
+// as single message
+sendToContent(
+    "Check listening tab URL"
+);
+
+// as question (will return an answer)
+sendToContent(
+    {
+        'question' : 'Are you ok?'
     }
+);
 
-    var callback = null;
-
-    for (var i = injectDetailsArray.length - 1; i >= 0; --i)
-        callback = createCallback(tabId, injectDetailsArray[i], callback);
-
-    if (callback !== null)
-        callback();   // execute outermost function
-}
-
-
-
-// Working when no popup is defined at manifest.json
-//chrome.browserAction.onClicked.addListener(function (tab) {
-chrome.pageAction.onClicked.addListener(
-  function (tab)
-  {
-    executeScripts(null, [
-        { code: "alert('executeScript0.js');" },
-        { file: "executeScript.js" },
-        { file: "executeScript2.js" }
-    ]);
-  }
+// callback set
+sendToContent(
+    {
+        'question' : 'What is the time there?',
+        'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback of callback" })'
+    }
 );
 */
-
-
+/*
+// Creates extension contextMenu items
 ( function createContextMenus()
 {
+    // contextMenu items: parameters Enum helpers
     var ENUM = {};
     ENUM.ContextType = {
         "all":"all",
@@ -105,6 +129,7 @@ chrome.pageAction.onClicked.addListener(
         "separator":"separator"
     };
 
+    // contextMenu items: parameter collection
     var contextMenuItems = {
         0: {
             //parentId integer OR string
@@ -164,13 +189,12 @@ chrome.pageAction.onClicked.addListener(
                         // so content script will be available
                     }
                 );
-                //chrome.tabs.executeScript(null, {code:});
             }
         }
     };
 
+    // contextMenu items: listeners will be extracted to its own collection
     var contextMenuListeners = {};
-
     for(var i in contextMenuItems)
     {
         contextMenuItems[i].id = chrome.i18n.getMessage('@@extension_id') + i;
@@ -180,11 +204,15 @@ chrome.pageAction.onClicked.addListener(
         chrome.contextMenus.create( contextMenuItems[i] );
     }
 
+    // contextMenu items: add click listener
     chrome.contextMenus.onClicked.addListener(
         function( info, tab )
         {
-            contextMenuListeners[ info.menuItemId ]();
+            return ( 'function' == typeof contextMenuListeners[ info.menuItemId ] )?
+                contextMenuListeners[ info.menuItemId ]()
+                : false;
         }
     );
 
 })();
+*/

@@ -314,7 +314,7 @@ function listenFromPanel( message, sender )
 			var Answer = contentResponser.questionAnswers[ message.question ];
 
 			if (Answer)
-				alert(message.question + ' --- ' + Answer);
+				alert( 'Panel question:\n' + message.question + '\nContent response:\n' + Answer );
 		}
 
 		if ( message.request)

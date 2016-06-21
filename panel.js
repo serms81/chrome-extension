@@ -1,6 +1,7 @@
 
 var panelConsole    = document.getElementById( 'console' );
 var panelList       = document.getElementById( 'stored-xpath-list' );
+var panelDemosWrap  = document.getElementById( 'demo-launchers' );
 var button_flush    = document.getElementById( 'xpaths-flush' );
 var button_save     = document.getElementById( 'xpaths-save' );
 var button_enable_catcher  = document.getElementById( 'catcher-toggle' );
@@ -80,7 +81,7 @@ var LIST = {
             JSON.stringify( what );
         }
 
-        panelList.scrollTop = panelList.scrollHeight;
+        document.getElementById( 'dt-panel' ).scrollTop = document.getElementById( 'dt-panel' ).scrollHeight;
     },
 
     flush: function()
@@ -116,16 +117,23 @@ function display_refresh()
 function catcher_enable()
 {
     button_enable_catcher.classList.remove( 'catcher-disabled' );
-    button_enable_catcher.textContent = 'Press to disable';
+    button_enable_catcher.textContent = 'Press to disable catcher';
     sendToContent( { 'callback': 'alert("catcher-enabled"); content_document_add_listener();' } );
 }
 
 function catcher_disable()
 {
     button_enable_catcher.classList.add( 'catcher-disabled' );
-    button_enable_catcher.textContent = 'Press to enable';
+    button_enable_catcher.textContent = 'Press to enable catcher';
     sendToContent( { 'callback': 'alert("catcher-disabled"); content_document_remove_listener();' } );
 }
+
+
+
+/****************************************************************************************************/
+/****************************************************************************************************/
+
+
 
 function panel_document_add_listeners()
 {
@@ -164,11 +172,73 @@ function panel_document_add_listeners()
     );
 }
 
+function panel_document_add_demo_launchers()
+{
+    var launchers = [
+        {
+            description: 'sendToContent an string message',
+            onclick: function()
+            {
+                // as single message
+                sendToContent(
+                    "Check listening tab URL"
+                )
+            }
+        },
+        {
+            description: 'sendToContent a question to answer',
+            onclick: function()
+            {
+                // as question (will return an answer)
+                sendToContent(
+                    {
+                        'question': 'Are you ok?'
+                    }
+                )
+            }
+        },
+        {
+            description: 'sendToContent a question to answer (2)',
+            onclick: function()
+            {
+                // callback set
+                sendToContent(
+                    {
+                        'question' : 'What is the time there?',
+                    }
+                )
+            }
+        },
+        {
+            description: 'sendToContent a callback (panel>content>panel)',
+            onclick: function()
+            {
+                // callback set
+                sendToContent(
+                    {
+                        'callback': 'if (confirm("Callback try? Pay attention to consoles.")) sendToPanel({ request: "PanelConsole_LOG", data: "callback of callback" })'
+                    }
+                )
+            }
+        }
+    ];
+    for( var launcher in launchers )
+    {
+        var button = document.createElement('DIV');
+        button.className = 'action-button';
+        button.id = 'demo-launcher-' + launcher;
+        button.textContent = 'Demo ' + launcher;
+        button.onclick = launchers[ launcher ].onclick;
+        button.setAttribute('title', launchers[ launcher ].description);
+        panelDemosWrap.appendChild( button );
+    }
+}
+
+
 
 /****************************************************************************************************/
 /****************************************************************************************************/
-/****************************************************************************************************/
-/****************************************************************************************************/
+
 
 
 function inspected_window_context_eval( what )
@@ -297,27 +367,7 @@ window.onload = function()
 
 	//Posting message to background page
 
-    // as single message
-    sendToContent(
-        "Check listening tab URL"
-    );
-
-    // as question (will return an answer)
-    sendToContent(
-        {
-            'question' : 'Are you ok?'
-        }
-    );
-
-    // callback set
-    sendToContent(
-        {
-            'question' : 'What is the time there?',
-            'callback': 'if (confirm("callback try?")) sendToPanel({ request: "PanelConsole_LOG", data: "callback of callback" })'
-        }
-    );
-
-    // as requirement
+    // as request (will trigger a response at content_script)
 	if( !pending_msg._data.length )
         sendToContent(
             { request: contentRequirements.localStorage.SEND }
@@ -325,4 +375,5 @@ window.onload = function()
 
 	pending_msg.refresh();
     panel_document_add_listeners();
+    panel_document_add_demo_launchers();
 };
