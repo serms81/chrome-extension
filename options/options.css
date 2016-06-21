@@ -1,0 +1,15 @@
+
+body {
+    padding: 5px;
+}
+.panel-header {
+    background: #ccc;
+    padding: 5px;
+    font-weight: bold;
+}
+.panel-footer {
+    text-align: right;
+}
+#selected-color {
+    font-weight: bold;
+}
