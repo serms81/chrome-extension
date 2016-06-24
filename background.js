@@ -26,57 +26,12 @@
  function (tab)
  {
  executeScripts(null, [
- { code: "alert('executeScript0.js');" },
- { file: "executeScript.js" },
- { file: "executeScript2.js" }
+ { code: "alert('exampleScript.js');" },
+ { file: "exampleScript.js" }
  ]);
  }
  );
  */
-
-var port;
-
-// When devtools panel initialized,
-// this can send messages to devtools panel.
-var sendToPanel = function ( message, sender )
-{
-    port.postMessage( message );
-};
-
-var sendToContent = function ( message )
-{
-    //Request a tab for sending needed information
-    chrome.tabs.query(
-        {
-            "status"        : "complete",
-            "currentWindow" : true//,
-            //"url": "http://www.google.co.in/"
-        },
-        function ( tabs )
-        {
-            for ( var tab in tabs ) {
-                //Sending Message to content scripts
-                chrome.tabs.sendMessage( tabs[tab].id, message );
-            }
-        }
-    );
-};
-
-
-//Handle request from devtools panel
-chrome.extension.onConnect.addListener(
-    function ( _port )
-    {
-        port = _port;
-
-        port.onMessage.addListener( sendToContent );
-
-        //Posting back to Devtools
-        chrome.extension.onMessage.addListener( sendToPanel );
-    }
-);
-
-
 
 /****************************************************************************************************/
 /****************************************************************************************************/
@@ -102,6 +57,7 @@ sendToContent(
     }
 );
 */
+
 /*
 // Creates extension contextMenu items
 ( function createContextMenus()

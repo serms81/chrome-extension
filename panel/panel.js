@@ -6,31 +6,29 @@ var button_flush    = document.getElementById( 'xpaths-flush' );
 var button_save     = document.getElementById( 'xpaths-save' );
 var button_enable_catcher  = document.getElementById( 'catcher-toggle' );
 
-var port;
-
-var pending_msg = {
+var MESSAGES = {
 
   'store': function(data)
   {
-  	data = data || JSON.stringify(pending_msg._data);
+  	data = data || JSON.stringify(MESSAGES._data);
     localStorage.setItem('htHelper_pending',data);
   },
 
   'restore': function()
   {
-    pending_msg._data = JSON.parse(localStorage.getItem('htHelper_pending')) || [];
+    MESSAGES._data = JSON.parse(localStorage.getItem('htHelper_pending')) || [];
   },
 
   'flush': function()
   {
-    pending_msg._data = [];
-    pending_msg.store();
+    MESSAGES._data = [];
+    MESSAGES.store();
   },
 
   'refresh': function()
   {
-	pending_msg.restore();
-	pending_msg._data.forEach(
+	MESSAGES.restore();
+	MESSAGES._data.forEach(
         function(msg,i)
         {
             LIST.write( msg );
@@ -41,7 +39,6 @@ var pending_msg = {
   _data: []
 
 };
-
 
 var CONSOLE = {
 
@@ -62,7 +59,6 @@ var CONSOLE = {
     }
 
 };
-
 
 var LIST = {
 
@@ -94,11 +90,10 @@ var LIST = {
 
 };
 
-
 function display_flush()
 {
     LIST.flush();
-    pending_msg.flush();
+    MESSAGES.flush();
     sendToContent(
         {
             'request'   : contentRequirements.localStorage.OVERWRITE,
@@ -107,33 +102,25 @@ function display_flush()
     )
 }
 
-
 function display_refresh()
 {
     LIST.flush();
-    pending_msg.refresh();
+    MESSAGES.refresh();
 }
 
 function catcher_enable()
 {
     button_enable_catcher.classList.remove( 'catcher-disabled' );
     button_enable_catcher.textContent = 'Press to disable catcher';
-    sendToContent( { 'callback': 'alert("catcher-enabled"); content_document_add_listener();' } );
+    sendToContent( { 'callback': 'content_document_add_listener();' } );
 }
 
 function catcher_disable()
 {
     button_enable_catcher.classList.add( 'catcher-disabled' );
     button_enable_catcher.textContent = 'Press to enable catcher';
-    sendToContent( { 'callback': 'alert("catcher-disabled"); content_document_remove_listener();' } );
+    sendToContent( { 'callback': 'content_document_remove_listener();' } );
 }
-
-
-
-/****************************************************************************************************/
-/****************************************************************************************************/
-
-
 
 function panel_document_add_listeners()
 {
@@ -236,144 +223,28 @@ function panel_document_add_demo_launchers()
 
 
 
-/****************************************************************************************************/
-/****************************************************************************************************/
-
-
-
-function inspected_window_context_eval( what )
+// INIT
+function panel_init()
 {
-    chrome.devtools.inspectedWindow.eval( what );
-}
+    var CETP_init_result = CETP_init();
 
-
-function content_script_context_eval( what )
-{
-    chrome.devtools.inspectedWindow.eval( what, { useContentScriptContext: true } );
-}
-
-
-function sendToContent( params_obj )
-{
-    port.postMessage( params_obj )
-}
-
-
-const contentRequirements = { // contentResponser available orders
-    
-    "localStorage": {
-        "SEND"      : "ContentLocalStorage_SEND",
-        "OVERWRITE" : "ContentLocalStorage_OVERWRITE"
-    },
-    
-    "console": {
-        "LOG"       : "ContentConsole_LOG"
-    }
-    
-};
-
-
-var panelResponser = ( function()
-{
-    return {
-
-        "PanelItemsList_WRITE": function( what )
-        {
-            LIST.write( what );
-        },
-
-        "PanelLocalStorage_SEND": function ()
-        {
-            sendToContent(
-                {
-                    'request': contentRequirements.localStorage.OVERWRITE,
-                    'data': JSON.stringify(pending_msg._data)
-                }
-            );
-        },
-
-        "PanelLocalStorage_OVERWRITE": function ( data )
-        {
-            localStorage.setItem( 'htHelper_pending', data );
-            CONSOLE.log( 'PanelLocalStorage_OVERWRITE with: ' + data );
-            display_refresh();
-        },
-
-        "PanelConsole_LOG": function( what )
-        {
-            CONSOLE.log( what );
-        }
-
-    }
-})();
-
-
-function listenFromContent( message, sender )
-{
-    CONSOLE.log( 'message recieved from content: ' + ( ('string' == typeof message)? message : JSON.stringify(message) ) );
-
-    if ( 'object' == typeof message )
+    if ( CETP_init_result )
     {
+        //Posting message to background page
+        // as request (will trigger a response at content_script)
+        if( !MESSAGES._data.length )
+            sendToContent(
+                { request: contentRequirements.localStorage.SEND }
+            );
 
-        if ( message.request )
-        {
-            if ( 'function' == typeof panelResponser[ message.request ] ) {
-                //Send needed information to background page
-                if ( message.data )
-                    panelResponser[ message.request ]( message.data );
-                else
-                    panelResponser[ message.request ]();
-            }
-            else {
-                CONSOLE.log('content request not defined: "' + message.request + '"');
-            }
-        }
-
-        if ( message.callback )
-        {
-            CONSOLE.log( typeof message.callback + ' message.callback recieved' );
-
-            switch( typeof message.callback )
-            {
-                case 'string':
-                    CONSOLE.log('eval callback string');
-                    try {
-                        if ( message.callback.indexOf('sendToPanel') == 0 )
-                            content_script_context_eval( message.callback );
-                        else
-                            inspected_window_context_eval(message.callback);
-                    } catch(e) {
-                        CONSOLE.log( 'eval callback string catch: ' + e.message )
-                    }
-                    break;
-
-                case 'function':
-                    CONSOLE.log('call callback function');
-                    message.callback();
-                    break;
-            }
-        }
+        MESSAGES.refresh();
+        panel_document_add_listeners();
+        panel_document_add_demo_launchers();
     }
-}
-
-
-window.onload = function()
-{
-	//Created a port with background page for continous message communication
-	port = chrome.extension.connect( { 'name': "Devtools Port" } );
-
-	//Hanlde response when recieved from background page
-	port.onMessage.addListener( listenFromContent );
-
-	//Posting message to background page
-
-    // as request (will trigger a response at content_script)
-	if( !pending_msg._data.length )
-        sendToContent(
-            { request: contentRequirements.localStorage.SEND }
-        );
-
-	pending_msg.refresh();
-    panel_document_add_listeners();
-    panel_document_add_demo_launchers();
+    else
+    {
+        panelConsole.innerHTML = "Unable to start CETP.";
+    }
 };
+
+panel_init();
